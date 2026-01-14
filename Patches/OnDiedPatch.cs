@@ -1,25 +1,31 @@
 using System;
+using System.Reflection;
+using System.Threading.Tasks;
+using Systems.Effects;
 using EFT;
 using EFT.HealthSystem;
 using EFT.UI;
-using System.Reflection;
-using System.Threading.Tasks;
+using EFT.Ballistics;
 using Comfort.Common;
-using EFT.CameraControl;
 using HarmonyLib;
 using SPT.Reflection.Patching;
-using UnityEngine;
 using Random = System.Random;
 
 namespace BringBackConcussion.Patches
 {
     public class OnDiedPatch : ModulePatch
     {
-        // Due to whatever reason this method triggering two times
+        // Due to whatever reason this method triggering two times we use timers for deaths
         private static bool _soundPlayed = false;
         private static DateTime _lastPlayTime = DateTime.MinValue;
         private static readonly TimeSpan CooldownTime = TimeSpan.FromSeconds(10);
-        private static ArmorHitSoundPlayer _cachedArmorHitSoundPlayer;
+        
+        private static readonly MaterialType[] HeadshotMaterials = 
+        {
+            MaterialType.Helmet,
+            MaterialType.GlassVisor,
+            MaterialType.HelmetRicochet
+        };
         
         protected override MethodBase GetTargetMethod()
         {
@@ -51,27 +57,31 @@ namespace BringBackConcussion.Patches
                 }
             
                 // Headshotted into death
+                // BSGs headshots on death didn't track whether the helmet was equipped, so I am freeing myself from another 5 hour torture :kekw:
                 if (
                     damageType == EDamageType.Bullet && 
                     Plugin.EnableHSSound.Value &&
                     __instance.GetBodyPartHealth(EBodyPart.Head, true).Current < 1 
                     )
                 {
-                    var armorHitPlayer = GetArmorHitSoundPlayer();
-                    var fpSoundsField = AccessTools.Field(typeof(ArmorHitSoundPlayer), "_fpSounds");
-                    var fpSounds = fpSoundsField.GetValue(armorHitPlayer) as AudioClip[];
+                    // Get effects instance
+                    var effectsInstance = GetEffectsInstance();
+                    if (effectsInstance == null)
+                    {
+                        Logger.LogError("[Bring Back Concussion] Effects instance not found!");
+                        return;
+                    }
                     
-                    // 4 sounds in array in total
-                    int randomIndex = UnityEngine.Random.Range(0, fpSounds.Length);
-                    AudioClip selectedSound = fpSounds[randomIndex];
+                    // Get the material field
+                    int randomIndex = UnityEngine.Random.Range(0, HeadshotMaterials.Length);
+                    MaterialType selectedMaterial = HeadshotMaterials[randomIndex];
                     
-                    Singleton<BetterAudio>.Instance.PlayNonspatial(
-                        fpSounds[randomIndex],
-                        BetterAudio.AudioSourceGroupType.Impacts,
-                        0.5f,  // sound position
-                        2f,
-                        null);
-                
+                    effectsInstance.EmitPlayerSoundOnly(
+                        selectedMaterial,
+                        player,
+                        1.0f,
+                        null
+                        );
                     _lastPlayTime = DateTime.Now;
                     
                     //Logger.LogInfo($"[Bring Back Concussion] Selected sound index: {randomIndex}, Name: {selectedSound.name}");
@@ -85,7 +95,7 @@ namespace BringBackConcussion.Patches
                 
                     // Simulate Live death UI sound (afair it plays with some kind of delay)
                     var random = new Random();
-                    int delayMilliseconds = random.Next(1000, 4000);
+                    int delayMilliseconds = random.Next(1500, 4000);
 
                     await Task.Delay(delayMilliseconds);
                     Singleton<GUISounds>.Instance.PlayUISound(EUISoundType.PlayerIsDead);
@@ -96,32 +106,24 @@ namespace BringBackConcussion.Patches
                 Logger.LogError($"[Bring Back Concussion] OnDiedPatch error: {e.Message}");
             }
         }
-        
-        private static ArmorHitSoundPlayer GetArmorHitSoundPlayer()
+
+        private static Effects GetEffectsInstance()
         {
-            if (_cachedArmorHitSoundPlayer != null)
+            try
             {
-                return _cachedArmorHitSoundPlayer;
-            }
-            
-            // ArmorHitSoundPlayer
-            _cachedArmorHitSoundPlayer = GameObject.FindObjectOfType<ArmorHitSoundPlayer>();
-            
-            // CameraController
-            if (_cachedArmorHitSoundPlayer == null)
-            {
-                var cameraController = Singleton<PlayerCameraController>.Instance;
-                if (cameraController != null)
+                var effectsInstance = Singleton<Effects>.Instance;
+                
+                if (effectsInstance != null)
                 {
-                    _cachedArmorHitSoundPlayer = cameraController.GetComponent<ArmorHitSoundPlayer>();
-                    if (_cachedArmorHitSoundPlayer == null)
-                    {
-                        _cachedArmorHitSoundPlayer = cameraController.GetComponentInChildren<ArmorHitSoundPlayer>();
-                    }
+                    return effectsInstance;
                 }
             }
+            catch (Exception e)
+            {
+                Logger.LogError($"[Bring Back Concussion] GetEffectsInstance error: {e.Message}");
+            }
             
-            return _cachedArmorHitSoundPlayer;
+            return null;
         }
     }
 }

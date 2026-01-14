@@ -5,7 +5,7 @@ using BringBackConcussion.Patches;
 
 namespace BringBackConcussion
 {
-    [BepInPlugin("com.harmonyzt.BringBackConcussion", "BringBackConcussion", "1.0.0")]
+    [BepInPlugin("com.harmonyzt.BringBackConcussion", "BringBackConcussion", "1.0.1")]
     public class Plugin : BaseUnityPlugin
     {
         public static ManualLogSource LogSource;
@@ -27,10 +27,10 @@ namespace BringBackConcussion
                 "General", "Concussion Duration", 5, new ConfigDescription("Determines how long the concussion lasts in seconds", new AcceptableValueRange<int>(0, 120))
                 );
             TinnitusEffect = Config.Bind(
-                "General", "Tinnitus effect", true, new ConfigDescription("Enable/Disable tinnitus effect (tinnitus only occurs if no headset is equipped)")
+                "General", "Tinnitus effect", false, new ConfigDescription("Enable/Disable tinnitus effect (tinnitus only occurs if no headset is equipped)")
                 );
             EnableHSSound = Config.Bind(
-                "Audio", "Enable Headshot Sound", true, new ConfigDescription("Enable/Disable visor/helmet hit sound effect upon death from headshot")
+                "Audio", "Enable Death Headshot Sound", true, new ConfigDescription("Enable/Disable visor/helmet hit sound effect upon death from headshot")
                 );
             PlayDeathUISound = Config.Bind(
                 "Audio", "Enable Death UI Sound", true, new ConfigDescription("Enable/Disable death UI sound")

@@ -1,12 +1,22 @@
-﻿using EFT;
+﻿using System;
+using EFT;
 using EFT.HealthSystem;
 using SPT.Reflection.Patching;
 using System.Reflection;
+using Comfort.Common;
+using EFT.Ballistics;
+using Systems.Effects;
 
 namespace BringBackConcussion.Patches
 {
     internal class ConcussionPatch : ModulePatch
     {
+        private static readonly MaterialType[] HeadshotMaterials = 
+        {
+            MaterialType.Helmet,
+            MaterialType.GlassVisor
+        };
+        
         protected override MethodBase GetTargetMethod() => typeof(Player).GetMethod("ApplyDamageInfo");
         
         [PatchPrefix]
@@ -29,11 +39,50 @@ namespace BringBackConcussion.Patches
                 {
                     activeHealthController.DoStun(1, 0);
                 }
+                
+                // Play crack sound effect upon head hit
+                // Get effects instance
+                var effectsInstance = GetEffectsInstance();
+                if (effectsInstance == null)
+                {
+                    Logger.LogError("[Bring Back Concussion] Effects instance not found!");
+                    return;
+                }
+                
+                // Get the material field
+                int randomIndex = UnityEngine.Random.Range(0, HeadshotMaterials.Length);
+                MaterialType selectedMaterial = HeadshotMaterials[randomIndex];
+                    
+                effectsInstance.EmitPlayerSoundOnly(
+                    selectedMaterial,
+                    __instance,
+                    1.0f,
+                    null
+                );
+                
             }
             else if (bodyPartType == EBodyPart.Head)
             {
                 Plugin.LogSource.LogInfo($"No concussion due higher damage. Damage taken at {bodyPartType}, damage: {damageInfo.Damage}, blocked by: {damageInfo.BlockedBy}.");
             }
+        }
+        private static Effects GetEffectsInstance()
+        {
+            try
+            {
+                var effectsInstance = Singleton<Effects>.Instance;
+                
+                if (effectsInstance != null)
+                {
+                    return effectsInstance;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError($"[Bring Back Concussion] GetEffectsInstance error: {e.Message}");
+            }
+            
+            return null;
         }
     }
 }
