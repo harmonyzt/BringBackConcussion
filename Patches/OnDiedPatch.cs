@@ -20,6 +20,8 @@ namespace BringBackConcussion.Patches
         private static DateTime _lastPlayTime = DateTime.MinValue;
         private static readonly TimeSpan CooldownTime = TimeSpan.FromSeconds(10);
         
+        private static Effects _cachedEffectsInstance;
+        
         private static readonly MaterialType[] HeadshotMaterials = 
         {
             MaterialType.Helmet,
@@ -74,17 +76,22 @@ namespace BringBackConcussion.Patches
                     
                     // Get the material field
                     int randomIndex = UnityEngine.Random.Range(0, HeadshotMaterials.Length);
-                    MaterialType selectedMaterial = HeadshotMaterials[randomIndex];
+                    MaterialType selectedMaterial = HeadshotMaterials[randomIndex]; 
+                
+                    if (!Plugin.MiscPickRandomSound.Value)
+                    {
+                        selectedMaterial = MaterialType.GlassVisor;
+                    }
                     
                     effectsInstance.EmitPlayerSoundOnly(
                         selectedMaterial,
                         player,
-                        1.0f,
+                        2.0f,
                         null
                         );
                     _lastPlayTime = DateTime.Now;
                     
-                    //Logger.LogInfo($"[Bring Back Concussion] Selected sound index: {randomIndex}, Name: {selectedSound.name}");
+                    // Logger.LogInfo($"[Bring Back Concussion] Selected sound index: {randomIndex}, Name: {selectedSound.name}");
                 }
             
                 // Play UI sound
@@ -95,7 +102,7 @@ namespace BringBackConcussion.Patches
                 
                     // Simulate Live death UI sound (afair it plays with some kind of delay)
                     var random = new Random();
-                    int delayMilliseconds = random.Next(1500, 4000);
+                    int delayMilliseconds = random.Next(1500, 4500);
 
                     await Task.Delay(delayMilliseconds);
                     Singleton<GUISounds>.Instance.PlayUISound(EUISoundType.PlayerIsDead);
@@ -111,12 +118,13 @@ namespace BringBackConcussion.Patches
         {
             try
             {
-                var effectsInstance = Singleton<Effects>.Instance;
-                
-                if (effectsInstance != null)
+                if (_cachedEffectsInstance != null)
                 {
-                    return effectsInstance;
+                    return _cachedEffectsInstance;
                 }
+
+                _cachedEffectsInstance = Singleton<Effects>.Instance;
+                return _cachedEffectsInstance;
             }
             catch (Exception e)
             {
