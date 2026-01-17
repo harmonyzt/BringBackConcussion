@@ -19,6 +19,7 @@ namespace BringBackConcussion.Patches
         };
 
         private static Effects _cachedEffectsInstance;
+        private static EffectsController _cachedEffectsControllerInstance;
         
         protected override MethodBase GetTargetMethod() => typeof(Player).GetMethod("ApplyDamageInfo");
         
@@ -31,7 +32,7 @@ namespace BringBackConcussion.Patches
             // Init
             ActiveHealthController activeHealthController = __instance.ActiveHealthController;
             
-            if (bodyPartType == EBodyPart.Head && damageInfo is { DamageType: EDamageType.Bullet} && (!string.IsNullOrEmpty(damageInfo.BlockedBy) || damageInfo.Damage < 10))
+            if (bodyPartType == EBodyPart.Head && damageInfo is { DamageType: EDamageType.Bullet})
             {
                 // Plugin.LogSource.LogWarning($"Took damage at {bodyPartType}, damage: {damageInfo.Damage}, blocked by: {damageInfo.BlockedBy}.");
                 
@@ -40,7 +41,7 @@ namespace BringBackConcussion.Patches
                 
                 activeHealthController.DoContusion(concussionDuration, concussionStrength);
                 
-                if (Plugin.TinnitusEffect.Value)
+                if (Plugin.TinnitusEffect.Value && !Plugin.MiscHeadshotBlind.Value)
                 {
                     activeHealthController.DoStun(1, 0);
                 } else if (Plugin.MiscHeadshotBlind.Value)

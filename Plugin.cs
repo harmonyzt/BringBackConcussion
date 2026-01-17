@@ -25,7 +25,6 @@ namespace BringBackConcussion
         internal static ConfigEntry<bool> MiscHeadshotBlind;
         internal static ConfigEntry<float> MiscHeadshotStrengthEffect;
         
-        // BaseUnityPlugin inherits MonoBehaviour, so you can use base unity functions like Awake() and Update()
         private void Awake()
         {
             // Configuration - Main
@@ -62,7 +61,7 @@ namespace BringBackConcussion
                 "Misc", "Headshots Blinds You", false, new ConfigDescription("Enable/Disable blindness by headshots")
             );
             MiscHeadshotStrengthEffect = Config.Bind(
-                "Misc", "Headshot Blindness Strength", 0.45f, new ConfigDescription("Enable/Disable strength of the blindness upon receiving headshot (very sensitive!)", new AcceptableValueRange<float>(0.1f, 1.5f))
+                "Misc", "Headshot Blindness Strength", 0.85f, new ConfigDescription("Enable/Disable strength of the blindness upon receiving headshot (very sensitive!)", new AcceptableValueRange<float>(0.1f, 1.5f))
             );
             MiscMitigateGrenadeFlashTinnitus = Config.Bind(
                 "Misc", "Always Mitigate Tinnitus Effect", true, new ConfigDescription("Enable/Disable mitigation of tinnitus effect playing at all costs if you get flashed and contused at the same time")
