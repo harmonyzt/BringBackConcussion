@@ -49,13 +49,13 @@ namespace BringBackConcussion
             );
             // Misc
             MiscGrenadeStun = Config.Bind(
-                "Misc", "Frag Grenades Always Concuss", true, new ConfigDescription("Enable/Disable concussion by frag grenades. If disabled, will use default BSG logic for concussion from frag grenades")
+                "Misc", "Frag Grenades Always Concuss", true, new ConfigDescription("Enable/Disable concussion by frag grenades. If disabled, will only use default BSG's logic for concussion from frag grenades")
             );
             MiscGrenadeBlind = Config.Bind(
                 "Misc", "Frag Grenades Blinds You", false, new ConfigDescription("Enable/Disable blindness by frag grenades")
             );
             MiscBlindnessStrengthEffect = Config.Bind(
-                "Misc", "Frag Grenade Blindness Strength", 0.75f, new ConfigDescription("Enable/Disable strength of the blindness", new AcceptableValueRange<float>(0.1f, 2.0f))
+                "Misc", "Frag Grenade Blindness Strength", 0.75f, new ConfigDescription("Enable/Disable strength of the blindness (very sensitive!)", new AcceptableValueRange<float>(0.1f, 2.0f))
             );
             MiscHeadshotBlind = Config.Bind(
                 "Misc", "Headshots Blinds You", false, new ConfigDescription("Enable/Disable blindness by headshots")

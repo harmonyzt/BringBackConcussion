@@ -19,8 +19,7 @@ namespace BringBackConcussion.Patches
         };
 
         private static Effects _cachedEffectsInstance;
-        private static EffectsController _cachedEffectsControllerInstance;
-        
+
         protected override MethodBase GetTargetMethod() => typeof(Player).GetMethod("ApplyDamageInfo");
         
         [PatchPrefix]
