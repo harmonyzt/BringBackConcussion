@@ -86,7 +86,7 @@ namespace BringBackConcussion.Patches
                 );
             }
             // Grenade Explosion
-            else if (damageInfo is { DamageType: EDamageType.GrenadeFragment })
+            else if (damageInfo is { DamageType: EDamageType.GrenadeFragment } or {DamageType: EDamageType.Explosion} or {DamageType: EDamageType.Artillery})
             {
                 // Plugin.LogSource.LogWarning($"Grenade hit! Trying to apply blindness...");
                 
