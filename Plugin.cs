@@ -15,6 +15,7 @@ namespace BringBackConcussion
         internal static ConfigEntry<bool> TinnitusEffect;
         internal static ConfigEntry<bool> EnableHSSound;
         internal static ConfigEntry<bool> PlayDeathUISound;
+        internal static ConfigEntry<bool> IgnoreTinnitusEquipmentChecks;
         // Misc
         internal static ConfigEntry<bool> MiscPickRandomSound;
         internal static ConfigEntry<bool> MiscGrenadeStun;
@@ -37,6 +38,10 @@ namespace BringBackConcussion
             TinnitusEffect = Config.Bind(
                 "General", "Tinnitus Effect", false, new ConfigDescription("Enable/Disable tinnitus effect (tinnitus only occurs if no headset is equipped). To completely disable tinnitus, make sure you have Always Mitigate Tinnitus Effect checked")
             );
+            IgnoreTinnitusEquipmentChecks = Config.Bind(
+                "Misc", "Ignore Tinnitus Equipment Checks", false, new ConfigDescription("If enabled, tinnitus will play even if you have headset equipped. Overrides Tinnitus Effect setting when enabled.")
+            );
+            
             // Audio
             EnableHSSound = Config.Bind(
                 "Audio", "Enable Death Headshot Sound", true, new ConfigDescription("Enable/Disable visor/helmet hit sound effect upon death from headshot")

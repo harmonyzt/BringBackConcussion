@@ -23,7 +23,7 @@ namespace BringBackConcussion.Patches
         protected override MethodBase GetTargetMethod() => typeof(Player).GetMethod("ApplyDamageInfo");
         
         [PatchPrefix]
-        public static void PatchPrefix(ref EBodyPart bodyPartType, ref DamageInfoStruct damageInfo, ref Player __instance)
+        public static void PatchPrefix(ref EBodyPart bodyPartType, ref DamageInfo damageInfo, ref Player __instance)
         {
             // Not us - do nothing
             if (__instance == null || !__instance.IsYourPlayer || __instance.IsAI) return;
