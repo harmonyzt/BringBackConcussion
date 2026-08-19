@@ -19,6 +19,12 @@ namespace BringBackConcussion.Patches
         [PatchPrefix]
         private static bool Prefix(Player __instance, ref float time)
         {
+            // Mitigate tinnitus at all costs if you got contused and flashed at the same time
+            if (Plugin.TinnitusEffect.Value && !Plugin.MiscMitigateGrenadeFlashTinnitus.Value)
+            {
+                return true;
+            }
+            
             // if the "Ignore Equipment Checks" is enabled, bypass whatever fuckery BSG put inside the tinnitus play
             if (Plugin.IgnoreTinnitusEquipmentChecks.Value)
             {
@@ -31,12 +37,6 @@ namespace BringBackConcussion.Patches
                 
                 // skip the original method
                 return false;
-            }
-            
-            // Mitigate tinnitus at all costs if you got contused and flashed at the same time
-            if (Plugin.TinnitusEffect.Value && !Plugin.MiscMitigateGrenadeFlashTinnitus.Value)
-            {
-                return true;
             }
 
             return false;

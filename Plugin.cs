@@ -5,10 +5,10 @@ using BringBackConcussion.Patches;
 
 namespace BringBackConcussion
 {
-    [BepInPlugin("com.harmonyzt.BringBackConcussion", "BringBackConcussion", "1.0.3")]
+    [BepInPlugin("com.harmonyzt.BringBackConcussion", "BringBackConcussion", "1.0.4")]
     public class Plugin : BaseUnityPlugin
     {
-        public static ManualLogSource LogSource;
+        public static ManualLogSource LOGSource;
         // Config
         internal static ConfigEntry<float> ConcussionStrength;
         internal static ConfigEntry<int> ConcussionDuration;
@@ -73,7 +73,7 @@ namespace BringBackConcussion
             );
             
             // save the Logger to variable so we can use it elsewhere in the project
-            LogSource = Logger;
+            LOGSource = Logger;
             
             // Enable patches
             new ConcussionPatch().Enable();

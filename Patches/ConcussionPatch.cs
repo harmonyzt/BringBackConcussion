@@ -5,6 +5,7 @@ using SPT.Reflection.Patching;
 using System.Reflection;
 using Comfort.Common;
 using EFT.Ballistics;
+using HarmonyLib;
 using Systems.Effects;
 
 namespace BringBackConcussion.Patches
@@ -20,18 +21,28 @@ namespace BringBackConcussion.Patches
 
         private static Effects _cachedEffectsInstance;
 
-        protected override MethodBase GetTargetMethod() => typeof(Player).GetMethod("ApplyDamageInfo");
+        protected override MethodBase GetTargetMethod() 
+        { 
+            return AccessTools.Method(typeof(Player), "ApplyDamageInfo");
+        }
         
         [PatchPrefix]
-        public static void PatchPrefix(ref EBodyPart bodyPartType, ref DamageInfo damageInfo, ref Player __instance)
+        public static void PatchPrefix(
+            EBodyPart bodyPartType, 
+            ref DamageInfo damageInfo, 
+            Player __instance)
         {
             // Not us - do nothing
-            if (__instance == null || !__instance.IsYourPlayer || __instance.IsAI) return;
+            if (__instance == null || !__instance.IsYourPlayer || __instance.IsAI) 
+                return;
             
             // Init
             ActiveHealthController activeHealthController = __instance.ActiveHealthController;
+
+            if (activeHealthController == null) 
+                return;
             
-            if (bodyPartType == EBodyPart.Head && damageInfo is { DamageType: EDamageType.Bullet})
+            if (bodyPartType == EBodyPart.Head && damageInfo is { DamageType: EDamageType.Bullet })
             {
                 // Plugin.LogSource.LogWarning($"Took damage at {bodyPartType}, damage: {damageInfo.Damage}, blocked by: {damageInfo.BlockedBy}.");
                 
@@ -43,7 +54,8 @@ namespace BringBackConcussion.Patches
                 if (Plugin.TinnitusEffect.Value && !Plugin.MiscHeadshotBlind.Value)
                 {
                     activeHealthController.DoStun(1, 0);
-                } else if (Plugin.MiscHeadshotBlind.Value)
+                } 
+                else if (Plugin.MiscHeadshotBlind.Value)
                 {
                     activeHealthController.DoStun(1, Plugin.MiscHeadshotStrengthEffect.Value);
                 }
@@ -76,7 +88,6 @@ namespace BringBackConcussion.Patches
             // Grenade Explosion
             else if (damageInfo is { DamageType: EDamageType.GrenadeFragment })
             {
-                
                 // Plugin.LogSource.LogWarning($"Grenade hit! Trying to apply blindness...");
                 
                 // Apply blindness
