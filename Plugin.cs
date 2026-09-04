@@ -5,7 +5,7 @@ using BringBackConcussion.Patches;
 
 namespace BringBackConcussion
 {
-    [BepInPlugin("com.harmonyzt.BringBackConcussion", "BringBackConcussion", "1.0.4")]
+    [BepInPlugin("com.harmonyzt.BringBackConcussion", "BringBackConcussion", "1.1.0")]
     public class Plugin : BaseUnityPlugin
     {
         public static ManualLogSource LOGSource;
@@ -16,6 +16,7 @@ namespace BringBackConcussion
         internal static ConfigEntry<bool> EnableHSSound;
         internal static ConfigEntry<bool> PlayDeathUISound;
         internal static ConfigEntry<bool> IgnoreTinnitusEquipmentChecks;
+        internal static ConfigEntry<bool> EnablePanic;
         // Misc
         internal static ConfigEntry<bool> MiscPickRandomSound;
         internal static ConfigEntry<bool> MiscGrenadeStun;
@@ -37,6 +38,9 @@ namespace BringBackConcussion
             );
             TinnitusEffect = Config.Bind(
                 "General", "Tinnitus Effect", false, new ConfigDescription("Enable/Disable tinnitus effect (tinnitus only occurs if no headset is equipped). To completely disable tinnitus, make sure you have Always Mitigate Tinnitus Effect checked")
+            );
+            EnablePanic = Config.Bind(
+                "General", "Panic", true, new ConfigDescription("Enable/Disable the chance of your character to panic under certain scenarios")
             );
             IgnoreTinnitusEquipmentChecks = Config.Bind(
                 "Misc", "Ignore Tinnitus Equipment Checks", false, new ConfigDescription("If enabled, tinnitus will play even if you have headset equipped. Overrides Tinnitus Effect setting when enabled.")
@@ -79,6 +83,7 @@ namespace BringBackConcussion
             new ConcussionPatch().Enable();
             new OnDiedPatch().Enable();
             new OnTinnitusPatch().Enable();
+            new RollForPanicValues().Enable();
             
             Logger.LogInfo("Bring Back Concussion is loaded!");
         }

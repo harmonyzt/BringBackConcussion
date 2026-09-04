@@ -68,7 +68,7 @@ namespace BringBackConcussion.Patches
                 {
                     // Get effects instance
                     var effectsInstance = GetEffectsInstance();
-                    if (effectsInstance == null)
+                    if (!effectsInstance)
                     {
                         Logger.LogError("[Bring Back Concussion] Effects instance not found!");
                         return;
@@ -113,7 +113,7 @@ namespace BringBackConcussion.Patches
                 Logger.LogError($"[Bring Back Concussion] OnDiedPatch error: {e.Message}");
             }
         }
-
+        
         private static Effects GetEffectsInstance()
         {
             try

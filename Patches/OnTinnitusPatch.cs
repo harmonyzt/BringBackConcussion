@@ -35,7 +35,7 @@ namespace BringBackConcussion.Patches
                 
                 Singleton<BetterAudio>.Instance.StartTinnitusEffect(time, tinnitus);
                 
-                // skip the original method
+                // skip the original method (I think?)
                 return true;
             }
 

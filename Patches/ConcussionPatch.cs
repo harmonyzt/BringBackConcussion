@@ -1,10 +1,10 @@
 ﻿using System;
 using EFT;
 using EFT.HealthSystem;
+using EFT.Ballistics;
 using SPT.Reflection.Patching;
 using System.Reflection;
 using Comfort.Common;
-using EFT.Ballistics;
 using HarmonyLib;
 using Systems.Effects;
 
@@ -42,7 +42,7 @@ namespace BringBackConcussion.Patches
             if (activeHealthController == null) 
                 return;
             
-            if (bodyPartType == EBodyPart.Head && damageInfo is { DamageType: EDamageType.Bullet })
+            if (bodyPartType == EBodyPart.Head && damageInfo is { DamageType: EDamageType.GrenadeFragment } or { DamageType: EDamageType.Bullet })
             {
                 // Plugin.LogSource.LogWarning($"Took damage at {bodyPartType}, damage: {damageInfo.Damage}, blocked by: {damageInfo.BlockedBy}.");
                 
@@ -84,6 +84,13 @@ namespace BringBackConcussion.Patches
                     2.0f,
                     null
                 );
+                
+                // Get panic
+                if (Plugin.EnablePanic.Value && RollForPanicValues.PanicRollChance > 20)
+                {
+                    activeHealthController.AddEffect<ActiveHealthController.PanicEffect>(EBodyPart.Head, 30f);
+                    activeHealthController.AddEffect<ActiveHealthController.MisfireEffect>(EBodyPart.Head, 10f);
+                }
             }
             // Grenade Explosion
             else if (damageInfo is { DamageType: EDamageType.GrenadeFragment } or {DamageType: EDamageType.Explosion} or {DamageType: EDamageType.Artillery})
@@ -103,6 +110,12 @@ namespace BringBackConcussion.Patches
                     float concussionDuration = Plugin.ConcussionDuration.Value;
 
                     activeHealthController.DoContusion(concussionDuration, concussionStrength);
+                }
+                
+                if (Plugin.EnablePanic.Value && RollForPanicValues.PanicRollChance > 20)
+                {
+                    activeHealthController.AddEffect<ActiveHealthController.PanicEffect>(EBodyPart.Head, 30f);
+                    activeHealthController.AddEffect<ActiveHealthController.MisfireEffect>(EBodyPart.Head, 10f);
                 }
             }
         }
