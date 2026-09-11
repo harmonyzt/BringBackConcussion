@@ -1,43 +1,46 @@
-using System;
 using EFT;
 using SPT.Reflection.Patching;
-using System.Reflection;
-using GPUInstancer;
-using HarmonyLib;
-using Systems.Effects;
 
 namespace BringBackConcussion.Patches
 {
-    internal class RollForPanicValues : ModulePatch
+    internal abstract class RollForPanicValues : ModulePatch
     {
-
-        public static int PanicRollChance = 5;
-
-        protected override MethodBase GetTargetMethod() 
-        { 
-            return AccessTools.Method(typeof(GameWorld), "OnGameStarted");
-        }
-        
-        [PatchPrefix]
-        public void PatchPrefix(GameWorld gameWorld,Player __instance)
+        // Calculate panic chance
+        public static int CalculatePanicChance(Player player)
         {
-            var stressResLevel = __instance.Skills.StressResistance.Level;
-            PanicRollChance = RollPanicChance(stressResLevel);
-        }
-        
-        private static int RollPanicChance(int stressResLevel)
-        {
-            if (stressResLevel > 50)
+            if (player == null || player.Skills?.StressResistance == null)
+                return 25;
+
+            int stressResLevel = player.Skills.StressResistance.Level;
+
+            if (stressResLevel >= 51)
             {
-                // We force elite stress resistance players to only have a solid 5%
-                return 5;
+                return UnityEngine.Random.Range(1, 3);
+            }
+            
+            if (stressResLevel >= 31)
+            {
+                return UnityEngine.Random.Range(5, 21);
             }
 
-            var randomInt = UnityEngine.Random.Range(1, 30);
-            var preRollValue = stressResLevel - randomInt;
-            var finalRollValue = preRollValue < 0 ? randomInt : preRollValue - randomInt;
-            
-            return finalRollValue < 0 ? 1 : finalRollValue;
+            if (stressResLevel >= 11)
+            {
+                return UnityEngine.Random.Range(20, 51);
+            }
+
+            return UnityEngine.Random.Range(20, 81);
+        }
+        
+        // Roll for panic
+        public static bool ShouldPanic(Player player)
+        {
+            if (!Plugin.EnablePanic.Value)
+                return false;
+
+            int panicChance = CalculatePanicChance(player);
+            int roll = UnityEngine.Random.Range(0, 100);
+
+            return roll < panicChance;
         }
     }
 }
