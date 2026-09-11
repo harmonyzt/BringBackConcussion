@@ -19,28 +19,34 @@ namespace BringBackConcussion.Patches
         [PatchPrefix]
         private static bool Prefix(Player __instance, ref float time)
         {
-            // Mitigate tinnitus at all costs if you got contused and flashed at the same time
-            if (Plugin.TinnitusEffect.Value && !Plugin.MiscMitigateGrenadeFlashTinnitus.Value)
+            // Tinnitus is disabled
+            if (!Plugin.TinnitusEffect.Value)
             {
-                return true;
+                return false;
             }
-            
-            // if the "Ignore Equipment Checks" is enabled, bypass whatever fuckery BSG put inside the tinnitus play
+
+            // Mitigate tinnitus at all costs if you got contused and flashed at the same time
+            if (Plugin.MiscMitigateGrenadeFlashTinnitus.Value)
+            {
+                return false;
+            }
+
+            // If "Ignore Equipment Checks" is enabled, bypass whatever fuckery BSG put inside the tinnitus play
             if (Plugin.IgnoreTinnitusEquipmentChecks.Value)
             {
                 if (_tinnitusField == null)
                     _tinnitusField = AccessTools.Field(typeof(Player), "_tinnitus");
 
                 var tinnitus = _tinnitusField.GetValue(__instance) as AudioClip;
-                
+
                 Singleton<BetterAudio>.Instance.StartTinnitusEffect(time, tinnitus);
-                
-                // skip the original method (I think?)
-                return true;
+
+                // skip the original method
+                return false;
             }
 
             // Let the original method fire normally
-            return false;
+            return true;
         }
     }
 }
