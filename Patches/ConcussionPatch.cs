@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using EFT;
 using EFT.HealthSystem;
 using EFT.Ballistics;
@@ -7,6 +8,7 @@ using System.Reflection;
 using Comfort.Common;
 using HarmonyLib;
 using Systems.Effects;
+using UnityEngine;
 
 namespace BringBackConcussion.Patches
 {
@@ -85,11 +87,12 @@ namespace BringBackConcussion.Patches
                     null
                 );
                 
-                // Get panic
-                if (Plugin.EnablePanic.Value && RollForPanicValues.PanicRollChance > 20)
+                // Roll for panic based on player's stress resistance
+                if (RollForPanicValues.ShouldPanic(__instance))
                 {
-                    activeHealthController.AddEffect<ActiveHealthController.PanicEffect>(EBodyPart.Head, 30f);
-                    activeHealthController.AddEffect<ActiveHealthController.MisfireEffect>(EBodyPart.Head, 10f);
+                    activeHealthController.AddEffect<ActiveHealthController.PanicEffect>(EBodyPart.Head, delayTime: 0f, workTime: null);
+                    activeHealthController.AddEffect<ActiveHealthController.MisfireEffect>(EBodyPart.Head, delayTime: 0f, workTime: null);
+                    __instance.StartCoroutine(RemovePanicEffectsAfterDelay(activeHealthController));
                 }
             }
             // Grenade Explosion
@@ -112,14 +115,27 @@ namespace BringBackConcussion.Patches
                     activeHealthController.DoContusion(concussionDuration, concussionStrength);
                 }
                 
-                if (Plugin.EnablePanic.Value && RollForPanicValues.PanicRollChance > 20)
+                // Roll for panic based on stress resistance
+                if (RollForPanicValues.ShouldPanic(__instance))
                 {
-                    activeHealthController.AddEffect<ActiveHealthController.PanicEffect>(EBodyPart.Head, 30f);
-                    activeHealthController.AddEffect<ActiveHealthController.MisfireEffect>(EBodyPart.Head, 10f);
+                    activeHealthController.AddEffect<ActiveHealthController.PanicEffect>(EBodyPart.Head, delayTime: 0f, workTime: null);
+                    activeHealthController.AddEffect<ActiveHealthController.MisfireEffect>(EBodyPart.Head, delayTime: 0f, workTime: null);
+                    __instance.StartCoroutine(RemovePanicEffectsAfterDelay(activeHealthController));
                 }
             }
         }
-        
+
+        private static IEnumerator RemovePanicEffectsAfterDelay(ActiveHealthController healthController)
+        {
+            float delay = UnityEngine.Random.Range(5f, 8f);
+            yield return new WaitForSeconds(delay);
+
+            healthController.RemoveEffect<ActiveHealthController.PanicEffect>(EBodyPart.Head);
+            healthController.RemoveEffect<ActiveHealthController.MisfireEffect>(EBodyPart.Head);
+
+            //Plugin.LOGSource.LogInfo($"[ConcussionPatch] Removed panic effects after {delay:F1}s");
+        }
+
         private static Effects GetEffectsInstance()
         {
             try
