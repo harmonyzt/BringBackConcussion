@@ -94,6 +94,23 @@ namespace BringBackConcussion.Patches
                     activeHealthController.AddEffect<ActiveHealthController.MisfireEffect>(EBodyPart.Head, delayTime: 0f, workTime: null);
                     __instance.StartCoroutine(RemovePanicEffectsAfterDelay(activeHealthController));
                 }
+
+                // Roll for adrenaline (painkiller) based on player's stress resistance
+                if (activeHealthController.IsAlive
+                    && activeHealthController.FindActiveEffect<IPainKiller>() == null
+                    && RollForAdrenalineValues.ShouldGetAdrenaline(__instance))
+                {
+                    float adrenalineDuration = Plugin.AdrenalineDuration.Value;
+                    activeHealthController.AddStackableEffect<ActiveHealthController.PainKiller>(
+                        bodyPart: EBodyPart.Head,
+                        effectSourceItem: null,
+                        strength: 1f,
+                        delay: 0f,
+                        duration: adrenalineDuration,
+                        residueTime: null,
+                        initCallback: painKiller => painKiller.StoreValues(string.Empty, adrenalineDuration)
+                    );
+                }
             }
             // Grenade Explosion
             else if (damageInfo is { DamageType: EDamageType.GrenadeFragment } or {DamageType: EDamageType.Explosion} or {DamageType: EDamageType.Artillery})
@@ -125,7 +142,7 @@ namespace BringBackConcussion.Patches
             }
         }
 
-        private static IEnumerator RemovePanicEffectsAfterDelay(ActiveHealthController healthController)
+        internal static IEnumerator RemovePanicEffectsAfterDelay(ActiveHealthController healthController)
         {
             float delay = UnityEngine.Random.Range(5f, 8f);
             yield return new WaitForSeconds(delay);

@@ -1,6 +1,7 @@
 using System.Reflection;
 using Comfort.Common;
 using EFT;
+using EFT.HealthSystem;
 using HarmonyLib;
 using SPT.Reflection.Patching;
 using UnityEngine;
@@ -26,7 +27,7 @@ namespace BringBackConcussion.Patches
             }
 
             // Mitigate tinnitus at all costs if you got contused and flashed at the same time
-            if (Plugin.MiscMitigateGrenadeFlashTinnitus.Value)
+            if (Plugin.MiscMitigateGrenadeFlashTinnitus.Value && IsFlashed(__instance))
             {
                 return false;
             }
@@ -47,6 +48,17 @@ namespace BringBackConcussion.Patches
 
             // Let the original method fire normally
             return true;
+        }
+
+        // Check whether the player is currently flashed
+        internal static bool IsFlashed(Player player)
+        {
+            ActiveHealthController healthController = player.ActiveHealthController;
+            if (healthController == null)
+                return false;
+
+            ActiveHealthController.Stun stun = healthController.FindActiveEffect<ActiveHealthController.Stun>(EBodyPart.Head);
+            return stun != null && stun.Strength > 0f;
         }
     }
 }

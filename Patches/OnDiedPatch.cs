@@ -16,7 +16,7 @@ namespace BringBackConcussion.Patches
     public class OnDiedPatch : ModulePatch
     {
         // Due to whatever reason this method triggering two times we use timers for deaths
-        private static bool _soundPlayed = false;
+        private static bool _soundPlayed;
         private static DateTime _lastPlayTime = DateTime.MinValue;
         private static readonly TimeSpan CooldownTime = TimeSpan.FromSeconds(10);
         

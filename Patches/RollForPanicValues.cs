@@ -13,22 +13,13 @@ namespace BringBackConcussion.Patches
 
             int stressResLevel = player.Skills.StressResistance.Level;
 
-            if (stressResLevel >= 51)
+            return stressResLevel switch
             {
-                return UnityEngine.Random.Range(1, 3);
-            }
-            
-            if (stressResLevel >= 31)
-            {
-                return UnityEngine.Random.Range(5, 21);
-            }
-
-            if (stressResLevel >= 11)
-            {
-                return UnityEngine.Random.Range(20, 51);
-            }
-
-            return UnityEngine.Random.Range(20, 81);
+                >= 51 => UnityEngine.Random.Range(1, 3),
+                >= 31 => UnityEngine.Random.Range(5, 21),
+                >= 11 => UnityEngine.Random.Range(20, 51),
+                _ => UnityEngine.Random.Range(20, 81)
+            };
         }
         
         // Roll for panic
