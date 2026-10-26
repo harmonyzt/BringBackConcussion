@@ -21,7 +21,7 @@ namespace BringBackConcussion.Patches
                 _ => UnityEngine.Random.Range(20, 81)
             };
         }
-        
+
         // Roll for panic
         public static bool ShouldPanic(Player player)
         {

@@ -5,7 +5,7 @@ using BringBackConcussion.Patches;
 
 namespace BringBackConcussion
 {
-    [BepInPlugin("com.harmonyzt.BringBackConcussion", "BringBackConcussion", "1.2.0")]
+    [BepInPlugin("com.harmonyzt.BringBackConcussion", "BringBackConcussion", "1.2.1")]
     public class Plugin : BaseUnityPlugin
     {
         public static ManualLogSource LOGSource;
@@ -29,6 +29,7 @@ namespace BringBackConcussion
         // Misc
         internal static ConfigEntry<bool> MiscPickRandomSound;
         internal static ConfigEntry<bool> MiscGrenadeStun;
+        internal static ConfigEntry<bool> VerboseLogging;
         // Frag grenades and headshots
         internal static ConfigEntry<bool> MiscGrenadeBlind;
         internal static ConfigEntry<bool> MiscMitigateGrenadeFlashTinnitus;
@@ -103,6 +104,9 @@ namespace BringBackConcussion
             );
             MiscMitigateGrenadeFlashTinnitus = Config.Bind(
                 "Misc", "Always Mitigate Tinnitus Effect", true, new ConfigDescription("If enabled, tinnitus will not play while (or at all times) you are flashed and concussed at the same time")
+            );
+            VerboseLogging = Config.Bind(
+                "Misc", "Verbose Logging", false, new ConfigDescription("Log headshot/explosion contusion events and suppression. Useful for reporting stuff to the dev. Leave disabled for normal play")
             );
             
             // save the Logger to variable so we can use it elsewhere in the project

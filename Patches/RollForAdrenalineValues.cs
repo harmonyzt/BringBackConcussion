@@ -17,7 +17,7 @@ namespace BringBackConcussion.Patches
                 >= 51 => UnityEngine.Random.Range(68, 98), // up to 98%
                 >= 31 => UnityEngine.Random.Range(37, 67), // up to 67%
                 >= 11 => UnityEngine.Random.Range(12, 36), // up to 36%
-                _ => UnityEngine.Random.Range(1, 11)    // up to 11%
+                _ => UnityEngine.Random.Range(1, 11)       // up to 11%
             };
         }
 

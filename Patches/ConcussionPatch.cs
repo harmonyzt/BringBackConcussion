@@ -14,7 +14,7 @@ namespace BringBackConcussion.Patches
 {
     internal class ConcussionPatch : ModulePatch
     {
-        private static readonly MaterialType[] HeadshotMaterials = 
+        private static readonly MaterialType[] HeadshotMaterials =
         {
             MaterialType.Helmet,
             MaterialType.GlassVisor,
@@ -23,75 +23,58 @@ namespace BringBackConcussion.Patches
 
         private static Effects _cachedEffectsInstance;
 
-        protected override MethodBase GetTargetMethod() 
-        { 
+        protected override MethodBase GetTargetMethod()
+        {
             return AccessTools.Method(typeof(Player), "ApplyDamageInfo");
         }
-        
+
         [PatchPrefix]
         public static void PatchPrefix(
-            EBodyPart bodyPartType, 
-            ref DamageInfo damageInfo, 
+            EBodyPart bodyPartType,
+            ref DamageInfo damageInfo,
             Player __instance)
         {
             // Not us - do nothing
-            if (__instance == null || !__instance.IsYourPlayer || __instance.IsAI) 
+            if (__instance == null || !__instance.IsYourPlayer || __instance.IsAI)
                 return;
-            
+
             // Init
             ActiveHealthController activeHealthController = __instance.ActiveHealthController;
 
-            if (activeHealthController == null) 
+            if (activeHealthController == null || !activeHealthController.IsAlive)
                 return;
-            
-            if (bodyPartType == EBodyPart.Head && damageInfo is { DamageType: EDamageType.GrenadeFragment } or { DamageType: EDamageType.Bullet })
+
+            if (bodyPartType == EBodyPart.Head && IsHeadHit(damageInfo))
             {
                 // Plugin.LogSource.LogWarning($"Took damage at {bodyPartType}, damage: {damageInfo.Damage}, blocked by: {damageInfo.BlockedBy}.");
-                
-                float concussionStrength = Plugin.ConcussionStrength.Value;
-                float concussionDuration = Plugin.ConcussionDuration.Value;
-                
-                activeHealthController.DoContusion(concussionDuration, concussionStrength);
-                
-                if (Plugin.TinnitusEffect.Value && !Plugin.MiscHeadshotBlind.Value)
+                if (Plugin.VerboseLogging.Value)
                 {
-                    activeHealthController.DoStun(1, 0);
-                } 
-                else if (Plugin.MiscHeadshotBlind.Value)
+                    Logger.LogInfo(
+                        $"[Bring Back Concussion] Head hit: {damageInfo.DamageType}, damage {damageInfo.Damage:F1}, blocked by {damageInfo.BlockedBy}, deflected by {damageInfo.DeflectedBy}");
+                }
+
+                // Apply the stun before the contusion
+                if (Plugin.MiscHeadshotBlind.Value)
                 {
                     activeHealthController.DoStun(1, Plugin.MiscHeadshotStrengthEffect.Value);
                 }
-                
+                else if (Plugin.TinnitusEffect.Value)
+                {
+                    activeHealthController.DoStun(1, 0);
+                }
+
+                activeHealthController.DoContusion(Plugin.ConcussionDuration.Value, Plugin.ConcussionStrength.Value);
+
                 // Play crack sound effect upon head hit
-                // Get effects instance
-                var effectsInstance = GetEffectsInstance();
-                if (effectsInstance == null)
-                {
-                    Logger.LogError("[Bring Back Concussion] Effects instance not found!");
-                    return;
-                }
-                
-                // Get the material field
-                int randomIndex = UnityEngine.Random.Range(0, HeadshotMaterials.Length);
-                MaterialType selectedMaterial = HeadshotMaterials[randomIndex]; 
-                
-                if (!Plugin.MiscPickRandomSound.Value)
-                {
-                    selectedMaterial = MaterialType.GlassVisor;
-                }
-                
-                effectsInstance.EmitPlayerSoundOnly(
-                    selectedMaterial,
-                    __instance,
-                    2.0f,
-                    null
-                );
-                
+                TryPlayHeadHitSound(__instance);
+
                 // Roll for panic based on player's stress resistance
                 if (RollForPanicValues.ShouldPanic(__instance))
                 {
-                    activeHealthController.AddEffect<ActiveHealthController.PanicEffect>(EBodyPart.Head, delayTime: 0f, workTime: null);
-                    activeHealthController.AddEffect<ActiveHealthController.MisfireEffect>(EBodyPart.Head, delayTime: 0f, workTime: null);
+                    activeHealthController.AddEffect<ActiveHealthController.PanicEffect>(EBodyPart.Head, delayTime: 0f,
+                        workTime: null);
+                    activeHealthController.AddEffect<ActiveHealthController.MisfireEffect>(EBodyPart.Head,
+                        delayTime: 0f, workTime: null);
                     __instance.StartCoroutine(RemovePanicEffectsAfterDelay(activeHealthController));
                 }
 
@@ -113,16 +96,22 @@ namespace BringBackConcussion.Patches
                 }
             }
             // Grenade Explosion
-            else if (damageInfo is { DamageType: EDamageType.GrenadeFragment } or {DamageType: EDamageType.Explosion} or {DamageType: EDamageType.Artillery})
+            else if (damageInfo is { DamageType: EDamageType.GrenadeFragment } or
+                     { DamageType: EDamageType.Explosion } or { DamageType: EDamageType.Artillery })
             {
                 // Plugin.LogSource.LogWarning($"Grenade hit! Trying to apply blindness...");
-                
+                if (Plugin.VerboseLogging.Value)
+                {
+                    Logger.LogInfo(
+                        $"[Bring Back Concussion] Explosion damage: {damageInfo.DamageType}, damage {damageInfo.Damage:F1}, body part {bodyPartType}");
+                }
+
                 // Apply blindness
                 if (Plugin.MiscGrenadeBlind.Value)
                 {
                     activeHealthController.DoStun(1.0f, Plugin.MiscBlindnessStrengthEffect.Value);
                 }
-                
+
                 // Apply concussion
                 if (Plugin.MiscGrenadeStun.Value)
                 {
@@ -131,15 +120,52 @@ namespace BringBackConcussion.Patches
 
                     activeHealthController.DoContusion(concussionDuration, concussionStrength);
                 }
-                
+
                 // Roll for panic based on stress resistance
                 if (RollForPanicValues.ShouldPanic(__instance))
                 {
-                    activeHealthController.AddEffect<ActiveHealthController.PanicEffect>(EBodyPart.Head, delayTime: 0f, workTime: null);
-                    activeHealthController.AddEffect<ActiveHealthController.MisfireEffect>(EBodyPart.Head, delayTime: 0f, workTime: null);
+                    activeHealthController.AddEffect<ActiveHealthController.PanicEffect>(EBodyPart.Head, delayTime: 0f,
+                        workTime: null);
+                    activeHealthController.AddEffect<ActiveHealthController.MisfireEffect>(EBodyPart.Head,
+                        delayTime: 0f, workTime: null);
                     __instance.StartCoroutine(RemovePanicEffectsAfterDelay(activeHealthController));
                 }
             }
+        }
+
+        private static bool IsHeadHit(DamageInfo damageInfo)
+        {
+            if (damageInfo.Damage <= 0f)
+                return false;
+
+            return damageInfo.DamageType is EDamageType.Bullet
+                or EDamageType.Sniper
+                or EDamageType.Melee
+                or EDamageType.Blunt
+                or EDamageType.Landmine
+                or EDamageType.Btr
+                or EDamageType.GrenadeFragment;
+        }
+
+        private static void TryPlayHeadHitSound(Player player)
+        {
+            Effects effectsInstance = GetEffectsInstance();
+            if (effectsInstance == null)
+            {
+                Logger.LogError("[Bring Back Concussion] Effects instance not found!");
+                return;
+            }
+
+            MaterialType selectedMaterial = Plugin.MiscPickRandomSound.Value
+                ? HeadshotMaterials[UnityEngine.Random.Range(0, HeadshotMaterials.Length)]
+                : MaterialType.GlassVisor;
+
+            effectsInstance.EmitPlayerSoundOnly(
+                selectedMaterial,
+                player,
+                2.0f,
+                null
+            );
         }
 
         internal static IEnumerator RemovePanicEffectsAfterDelay(ActiveHealthController healthController)
@@ -169,7 +195,7 @@ namespace BringBackConcussion.Patches
             {
                 Logger.LogError($"[Bring Back Concussion] GetEffectsInstance error: {e.Message}");
             }
-            
+
             return null;
         }
     }

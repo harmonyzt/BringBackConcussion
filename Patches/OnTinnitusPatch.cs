@@ -11,15 +11,22 @@ namespace BringBackConcussion.Patches
     public class OnTinnitusPatch : ModulePatch
     {
         private static FieldInfo _tinnitusField;
-        
+
         protected override MethodBase GetTargetMethod()
         {
             return AccessTools.Method(typeof(Player), nameof(Player.TryStartContusion));
         }
-        
+
         [PatchPrefix]
         private static bool Prefix(Player __instance, ref float time)
         {
+            if (!__instance.IsYourPlayer)
+            {
+                if (Plugin.VerboseLogging.Value)
+                    Logger.LogInfo("[Bring Back Concussion] Skipping tinnitus for non-local player.");
+                return false;
+            }
+
             // Tinnitus is disabled
             if (!Plugin.TinnitusEffect.Value)
             {
@@ -29,6 +36,8 @@ namespace BringBackConcussion.Patches
             // Mitigate tinnitus at all costs if you got contused and flashed at the same time
             if (Plugin.MiscMitigateGrenadeFlashTinnitus.Value && IsFlashed(__instance))
             {
+                if (Plugin.VerboseLogging.Value)
+                    Logger.LogInfo("[Bring Back Concussion] Tinnitus suppressed while flashed.");
                 return false;
             }
 
@@ -38,7 +47,17 @@ namespace BringBackConcussion.Patches
                 if (_tinnitusField == null)
                     _tinnitusField = AccessTools.Field(typeof(Player), "_tinnitus");
 
-                var tinnitus = _tinnitusField.GetValue(__instance) as AudioClip;
+                if (!Singleton<BetterAudio>.Instantiated)
+                {
+                    if (Plugin.VerboseLogging.Value)
+                        Logger.LogInfo("[Bring Back Concussion] BetterAudio not ready, skipping tinnitus.");
+                    return false;
+                }
+
+                var tinnitus = _tinnitusField?.GetValue(__instance) as AudioClip;
+
+                if (Plugin.VerboseLogging.Value)
+                    Logger.LogInfo($"[Bring Back Concussion] Starting tinnitus for {time:F2}s");
 
                 Singleton<BetterAudio>.Instance.StartTinnitusEffect(time, tinnitus);
 
@@ -57,7 +76,8 @@ namespace BringBackConcussion.Patches
             if (healthController == null)
                 return false;
 
-            ActiveHealthController.Stun stun = healthController.FindActiveEffect<ActiveHealthController.Stun>(EBodyPart.Head);
+            ActiveHealthController.Stun stun =
+                healthController.FindActiveEffect<ActiveHealthController.Stun>(EBodyPart.Head);
             return stun != null && stun.Strength > 0f;
         }
     }

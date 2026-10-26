@@ -27,7 +27,8 @@ namespace BringBackConcussion.Patches
         {
             try
             {
-                if (grenadeItem == null)
+                // Skip dummy explosives
+                if (grenadeItem == null || grenadeItem.IsDummy)
                     return;
 
                 GameWorld gameWorld = Singleton<GameWorld>.Instance;
@@ -52,6 +53,12 @@ namespace BringBackConcussion.Patches
                 // 1 = at the epicenter (gg)
                 float closeness = Mathf.Clamp01(1f - distance / radius);
 
+                if (Plugin.VerboseLogging.Value)
+                {
+                    Logger.LogInfo(
+                        $"[Bring Back Concussion] Explosion at {distance:F1}m / {radius:F1}m (closeness {closeness:F2})");
+                }
+
                 // Cut off sound based on proximity
                 if (Plugin.ExplosionSoundCutoff.Value)
                 {
@@ -72,14 +79,8 @@ namespace BringBackConcussion.Patches
 
         private static void ApplyConcussionMechanics(Player player, ActiveHealthController activeHealthController)
         {
-            // Applies the concussion effect - tinnitus is started from it
-            // Because whatever the fuck BSG is doing with this, and I am tired it just makes 0 sense why'd you start tinnitus just from DoContusion
-            activeHealthController.DoContusion(Plugin.ConcussionDuration.Value, Plugin.ConcussionStrength.Value);
-
-            // Play the tinnitus ring directly because fuck ugly BSG code
-            TryStartTinnitus(player, Plugin.ConcussionDuration.Value);
-
-            // Flash blindness from the explosion
+            // Flash blindness first. Applying the stun afterwards silently kills the ring.
+            // Stupid, I know...
             if (Plugin.MiscGrenadeBlind.Value)
             {
                 activeHealthController.DoStun(1.0f, Plugin.MiscBlindnessStrengthEffect.Value);
@@ -89,11 +90,20 @@ namespace BringBackConcussion.Patches
                 activeHealthController.DoStun(1, 0);
             }
 
+            // Applies the concussion effect - tinnitus is started from it
+            // Because whatever the fuck BSG is doing with this, and I am tired it just makes 0 sense why'd you start tinnitus just from DoContusion
+            activeHealthController.DoContusion(Plugin.ConcussionDuration.Value, Plugin.ConcussionStrength.Value);
+
+            // Play the tinnitus ring directly because fuck ugly BSG code
+            TryStartTinnitus(player, Plugin.ConcussionDuration.Value);
+
             // Roll for panic based on player's stress resistance
             if (RollForPanicValues.ShouldPanic(player))
             {
-                activeHealthController.AddEffect<ActiveHealthController.PanicEffect>(EBodyPart.Head, delayTime: 0f, workTime: null);
-                activeHealthController.AddEffect<ActiveHealthController.MisfireEffect>(EBodyPart.Head, delayTime: 0f, workTime: null);
+                activeHealthController.AddEffect<ActiveHealthController.PanicEffect>(EBodyPart.Head, delayTime: 0f,
+                    workTime: null);
+                activeHealthController.AddEffect<ActiveHealthController.MisfireEffect>(EBodyPart.Head, delayTime: 0f,
+                    workTime: null);
                 player.StartCoroutine(ConcussionPatch.RemovePanicEffectsAfterDelay(activeHealthController));
             }
         }
