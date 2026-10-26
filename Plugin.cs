@@ -5,7 +5,7 @@ using BringBackConcussion.Patches;
 
 namespace BringBackConcussion
 {
-    [BepInPlugin("com.harmonyzt.BringBackConcussion", "BringBackConcussion", "1.2.1")]
+    [BepInPlugin("com.harmonyzt.BringBackConcussion", "Bring Back Concussion", "1.2.1")]
     public class Plugin : BaseUnityPlugin
     {
         public static ManualLogSource LOGSource;
