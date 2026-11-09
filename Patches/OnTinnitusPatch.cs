@@ -76,8 +76,7 @@ namespace BringBackConcussion.Patches
             if (healthController == null)
                 return false;
 
-            ActiveHealthController.Stun stun =
-                healthController.FindActiveEffect<ActiveHealthController.Stun>(EBodyPart.Head);
+            ActiveHealthController.Stun stun = healthController.FindActiveEffect<ActiveHealthController.Stun>(EBodyPart.Head);
             return stun != null && stun.Strength > 0f;
         }
     }

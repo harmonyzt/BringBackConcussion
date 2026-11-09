@@ -22,12 +22,7 @@ namespace BringBackConcussion.Patches
 
         private static Effects _cachedEffectsInstance;
 
-        private static readonly MaterialType[] HeadshotMaterials =
-        {
-            MaterialType.Helmet,
-            MaterialType.GlassVisor,
-            MaterialType.HelmetRicochet
-        };
+        private static readonly MaterialType[] HeadshotMaterials = { MaterialType.Helmet, MaterialType.GlassVisor, MaterialType.HelmetRicochet };
 
         private static readonly FieldInfo PlayerField = AccessTools.Field(typeof(ActiveHealthController), "Player");
 
@@ -42,9 +37,7 @@ namespace BringBackConcussion.Patches
             try
             {
                 // Allow AI to die normally
-                if (PlayerField?.GetValue(__instance) is not Player player ||
-                    player.IsAI ||
-                    !player.IsYourPlayer)
+                if (PlayerField?.GetValue(__instance) is not Player player || player.IsAI || !player.IsYourPlayer)
                     return;
 
                 // Check cooldown
@@ -61,11 +54,7 @@ namespace BringBackConcussion.Patches
 
                 // Headshotted into death
                 // BSGs headshots on death didn't track whether the helmet was equipped, so I am freeing myself from another 5 hour torture :kekw:
-                if (
-                    damageType is EDamageType.Bullet or EDamageType.Sniper &&
-                    Plugin.EnableHSSound.Value &&
-                    __instance.GetBodyPartHealth(EBodyPart.Head, true).Current < 1
-                )
+                if (damageType is EDamageType.Bullet or EDamageType.Sniper && Plugin.EnableHSSound.Value && __instance.GetBodyPartHealth(EBodyPart.Head, true).Current < 1)
                 {
                     // Get effects instance
                     var effectsInstance = GetEffectsInstance();
@@ -84,12 +73,7 @@ namespace BringBackConcussion.Patches
                             selectedMaterial = MaterialType.GlassVisor;
                         }
 
-                        effectsInstance.EmitPlayerSoundOnly(
-                            selectedMaterial,
-                            player,
-                            2.0f,
-                            null
-                        );
+                        effectsInstance.EmitPlayerSoundOnly(selectedMaterial, player, 2.0f, null);
                         _lastPlayTime = DateTime.Now;
 
                         // Logger.LogInfo($"[Bring Back Concussion] Selected sound index: {randomIndex}, Name: {selectedSound.name}");

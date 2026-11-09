@@ -54,20 +54,13 @@ namespace BringBackConcussion.Patches
         private static IEnumerator CutoffRoutine(BetterAudio betterAudio, float closeness)
         {
             Audio.Data.AudioMixerDataContainer data = betterAudio.AudioMixerData;
-            string[] keys =
-            {
-                data.MainMixerVolume,
-                data.GunsMixerVolume,
-                data.WorldMixerVolume,
-                data.AmbientInMixerVolume,
-                data.AmbientOutMixerVolume
-            };
-            
+            string[] keys = { data.MainMixerVolume, data.GunsMixerVolume, data.WorldMixerVolume, data.AmbientInMixerVolume, data.AmbientOutMixerVolume };
+
             float endVolumeDb = Mathf.Lerp(0f, -80f, closeness);
             float cutTime = Mathf.Lerp(0.3f, 0.05f, closeness);
             float holdTime = Mathf.Lerp(0.2f, 1.5f, closeness);
             float fadeTime = Plugin.ExplosionSoundFadeTime.Value;
-            
+
             // Values at -80 dB is our work and nothing else writes them so restore them back to normal
             float[] startDb = new float[keys.Length];
             for (int i = 0; i < keys.Length; i++)

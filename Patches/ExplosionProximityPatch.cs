@@ -55,8 +55,7 @@ namespace BringBackConcussion.Patches
 
                 if (Plugin.VerboseLogging.Value)
                 {
-                    Logger.LogInfo(
-                        $"[Bring Back Concussion] Explosion at {distance:F1}m / {radius:F1}m (closeness {closeness:F2})");
+                    Logger.LogInfo($"[Bring Back Concussion] Explosion at {distance:F1}m / {radius:F1}m (closeness {closeness:F2})");
                 }
 
                 // Cut off sound based on proximity
@@ -100,10 +99,8 @@ namespace BringBackConcussion.Patches
             // Roll for panic based on player's stress resistance
             if (RollForPanicValues.ShouldPanic(player))
             {
-                activeHealthController.AddEffect<ActiveHealthController.PanicEffect>(EBodyPart.Head, delayTime: 0f,
-                    workTime: null);
-                activeHealthController.AddEffect<ActiveHealthController.MisfireEffect>(EBodyPart.Head, delayTime: 0f,
-                    workTime: null);
+                activeHealthController.AddEffect<ActiveHealthController.PanicEffect>(EBodyPart.Head, delayTime: 0f, workTime: null);
+                activeHealthController.AddEffect<ActiveHealthController.MisfireEffect>(EBodyPart.Head, delayTime: 0f, workTime: null);
                 player.StartCoroutine(ConcussionPatch.RemovePanicEffectsAfterDelay(activeHealthController));
             }
         }
@@ -123,8 +120,7 @@ namespace BringBackConcussion.Patches
                     return;
 
                 // Respect the headset here
-                if (!Plugin.IgnoreTinnitusEquipmentChecks.Value
-                    && player.Equipment.GetSlot(EquipmentSlot.Earpiece).ContainedItem is Headphones)
+                if (!Plugin.IgnoreTinnitusEquipmentChecks.Value && player.Equipment.GetSlot(EquipmentSlot.Earpiece).ContainedItem is Headphones)
                     return;
 
                 if (!Singleton<BetterAudio>.Instantiated)

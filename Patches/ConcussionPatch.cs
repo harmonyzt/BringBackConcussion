@@ -14,12 +14,9 @@ namespace BringBackConcussion.Patches
 {
     internal class ConcussionPatch : ModulePatch
     {
-        private static readonly MaterialType[] HeadshotMaterials =
-        {
-            MaterialType.Helmet,
-            MaterialType.GlassVisor,
-            MaterialType.HelmetRicochet
-        };
+        private static readonly MaterialType[] HeadshotMaterials = { MaterialType.Helmet, MaterialType.GlassVisor, MaterialType.HelmetRicochet };
+
+        private static readonly SkillManager.SkillAction PanicSkillAction = new SkillManager.SkillAction();
 
         private static Effects _cachedEffectsInstance;
 
@@ -29,10 +26,7 @@ namespace BringBackConcussion.Patches
         }
 
         [PatchPrefix]
-        public static void PatchPrefix(
-            EBodyPart bodyPartType,
-            ref DamageInfo damageInfo,
-            Player __instance)
+        public static void PatchPrefix(EBodyPart bodyPartType, ref DamageInfo damageInfo, Player __instance)
         {
             // Not us - do nothing
             if (__instance == null || !__instance.IsYourPlayer || __instance.IsAI)
@@ -71,39 +65,25 @@ namespace BringBackConcussion.Patches
                 // Roll for panic based on player's stress resistance
                 if (RollForPanicValues.ShouldPanic(__instance))
                 {
-                    activeHealthController.AddEffect<ActiveHealthController.PanicEffect>(EBodyPart.Head, delayTime: 0f,
-                        workTime: null);
-                    activeHealthController.AddEffect<ActiveHealthController.MisfireEffect>(EBodyPart.Head,
-                        delayTime: 0f, workTime: null);
-                    __instance.StartCoroutine(RemovePanicEffectsAfterDelay(activeHealthController));
+                    ApplyPanic(__instance, activeHealthController);
                 }
 
                 // Roll for adrenaline (painkiller) based on player's stress resistance
-                if (activeHealthController.IsAlive
-                    && activeHealthController.FindActiveEffect<IPainKiller>() == null
-                    && RollForAdrenalineValues.ShouldGetAdrenaline(__instance))
+                if (activeHealthController.IsAlive && activeHealthController.FindActiveEffect<IPainKiller>() == null && RollForAdrenalineValues.ShouldGetAdrenaline(__instance))
                 {
                     float adrenalineDuration = Plugin.AdrenalineDuration.Value;
-                    activeHealthController.AddStackableEffect<ActiveHealthController.PainKiller>(
-                        bodyPart: EBodyPart.Head,
-                        effectSourceItem: null,
-                        strength: 1f,
-                        delay: 0f,
-                        duration: adrenalineDuration,
-                        residueTime: null,
-                        initCallback: painKiller => painKiller.StoreValues(string.Empty, adrenalineDuration)
-                    );
+
+                    activeHealthController.AddStackableEffect<ActiveHealthController.PainKiller>(bodyPart: EBodyPart.Head, effectSourceItem: null, strength: 1f, delay: 0f,
+                        duration: adrenalineDuration, residueTime: null, initCallback: painKiller => painKiller.StoreValues(string.Empty, adrenalineDuration));
                 }
             }
             // Grenade Explosion
-            else if (damageInfo is { DamageType: EDamageType.GrenadeFragment } or
-                     { DamageType: EDamageType.Explosion } or { DamageType: EDamageType.Artillery })
+            else if (damageInfo is { DamageType: EDamageType.GrenadeFragment } or { DamageType: EDamageType.Explosion } or { DamageType: EDamageType.Artillery })
             {
                 // Plugin.LogSource.LogWarning($"Grenade hit! Trying to apply blindness...");
                 if (Plugin.VerboseLogging.Value)
                 {
-                    Logger.LogInfo(
-                        $"[Bring Back Concussion] Explosion damage: {damageInfo.DamageType}, damage {damageInfo.Damage:F1}, body part {bodyPartType}");
+                    Logger.LogInfo($"[Bring Back Concussion] Explosion damage: {damageInfo.DamageType}, damage {damageInfo.Damage:F1}, body part {bodyPartType}");
                 }
 
                 // Apply blindness
@@ -124,10 +104,8 @@ namespace BringBackConcussion.Patches
                 // Roll for panic based on stress resistance
                 if (RollForPanicValues.ShouldPanic(__instance))
                 {
-                    activeHealthController.AddEffect<ActiveHealthController.PanicEffect>(EBodyPart.Head, delayTime: 0f,
-                        workTime: null);
-                    activeHealthController.AddEffect<ActiveHealthController.MisfireEffect>(EBodyPart.Head,
-                        delayTime: 0f, workTime: null);
+                    activeHealthController.AddEffect<ActiveHealthController.PanicEffect>(EBodyPart.Head, delayTime: 0f, workTime: null);
+                    activeHealthController.AddEffect<ActiveHealthController.MisfireEffect>(EBodyPart.Head, delayTime: 0f, workTime: null);
                     __instance.StartCoroutine(RemovePanicEffectsAfterDelay(activeHealthController));
                 }
             }
@@ -138,12 +116,7 @@ namespace BringBackConcussion.Patches
             if (damageInfo.Damage <= 0f)
                 return false;
 
-            return damageInfo.DamageType is EDamageType.Bullet
-                or EDamageType.Sniper
-                or EDamageType.Melee
-                or EDamageType.Blunt
-                or EDamageType.Landmine
-                or EDamageType.Btr
+            return damageInfo.DamageType is EDamageType.Bullet or EDamageType.Sniper or EDamageType.Melee or EDamageType.Blunt or EDamageType.Landmine or EDamageType.Btr
                 or EDamageType.GrenadeFragment;
         }
 
@@ -156,16 +129,26 @@ namespace BringBackConcussion.Patches
                 return;
             }
 
-            MaterialType selectedMaterial = Plugin.MiscPickRandomSound.Value
-                ? HeadshotMaterials[UnityEngine.Random.Range(0, HeadshotMaterials.Length)]
-                : MaterialType.GlassVisor;
+            MaterialType selectedMaterial = Plugin.MiscPickRandomSound.Value ? HeadshotMaterials[UnityEngine.Random.Range(0, HeadshotMaterials.Length)] : MaterialType.GlassVisor;
 
-            effectsInstance.EmitPlayerSoundOnly(
-                selectedMaterial,
-                player,
-                2.0f,
-                null
-            );
+            effectsInstance.EmitPlayerSoundOnly(selectedMaterial, player, 2.0f, null);
+        }
+
+        private static void ApplyPanic(Player player, ActiveHealthController healthController)
+        {
+            var existingPanic = healthController.FindExistingEffect<ActiveHealthController.PanicEffect>(EBodyPart.Head);
+
+            var panic = healthController.AddEffect<ActiveHealthController.PanicEffect>(EBodyPart.Head, delayTime: 0f, workTime: null);
+
+            healthController.AddEffect<ActiveHealthController.MisfireEffect>(EBodyPart.Head, delayTime: 0f, workTime: null);
+
+            player.StartCoroutine(RemovePanicEffectsAfterDelay(healthController));
+
+            float xp = Plugin.PanicStressResistanceXp.Value;
+            if (xp > 0f && panic != null && panic.Active && !ReferenceEquals(panic, existingPanic))
+            {
+                player.Skills.StressResistance.OnTrigger(PanicSkillAction, xp);
+            }
         }
 
         internal static IEnumerator RemovePanicEffectsAfterDelay(ActiveHealthController healthController)
